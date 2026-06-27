@@ -7,9 +7,10 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 env:
-  CSV_URL: 'data/final_data_students.csv'
+  CSV_URL: 'MLProject/data/final_data_students.csv'
 
 jobs:
   build:
@@ -40,6 +41,9 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f MLProject/requirements.txt ]; then
             pip install -r MLProject/requirements.txt
+          else
+            pip install mlflow scikit-learn pandas numpy matplotlib seaborn
+          fi
       
       # Run MLflow Project
       - name: Run MLflow Project Tuning
@@ -78,3 +82,8 @@ jobs:
         with:
           name: students-performance-best-model
           path: downloaded_artifacts
+
+      - name: Workflow Completed
+        run: |
+          echo 'Training completed successfully'
+          echo 'Best artifacts successfully uploaded to GitHub'
