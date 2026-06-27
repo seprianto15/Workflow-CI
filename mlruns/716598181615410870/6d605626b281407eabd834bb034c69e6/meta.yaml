@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/716598181615410870/6d605626b281407eabd834bb034c69e6/artifacts
+end_time: 1782584261411
+entry_point_name: ''
+experiment_id: '716598181615410870'
+lifecycle_stage: active
+run_id: 6d605626b281407eabd834bb034c69e6
+run_name: placid-lamb-374
+run_uuid: 6d605626b281407eabd834bb034c69e6
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1782584254302
+status: 3
+tags: []
+user_id: sepri
