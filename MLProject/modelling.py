@@ -34,8 +34,8 @@ def main():
     input_example = X_train.iloc[0:5]
 
     # 5. Set up parameter Random Search
-    n_estimators_range = np.linspace(10, 1000, 5, dtype=int)
-    max_depth_range = np.linspace(1, 50, 5, dtype=int)
+    n_estimators_range = np.linspace(10, 100, 5, dtype=int)
+    max_depth_range = np.linspace(1, 20, 5, dtype=int)
 
     best_accuracy = 0
     best_model = None
