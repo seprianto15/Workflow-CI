@@ -57,84 +57,88 @@ def main():
 
     print(f"Tuning finished. Best Accuracy: {best_accuracy} Best Params: {best_params}")
 
-    # 6. Log ONLY the single best model and its rich artifacts to MLflow
-    run_name = f"best_run_rf_{best_params['n_estimators']}_{best_params['max_depth']}"
-    with mlflow.start_run(run_name=run_name) as run:
-        best_run_id = run.info.run_id
+    # Dynamically retrieve parameters for logging
+    best_n_est = int(best_params['n_estimators'])
+    best_m_depth = int(best_params['max_depth'])
 
-        # Log hyperparameters
-        mlflow.log_params({
-            'n_estimators': best_params['n_estimators'],
-            'max_depth': best_params['max_depth'],
-            'random_state': 42
-        })
+    if mlflow.active_run():
+        mlflow.set_tag("mlflow.runName", f"best_run_rf_{best_n_est}_{best_m_depth}")
 
-        # Evaluation Metrics
-        y_pred_train = best_model.predict(X_train)
-        y_pred_test = best_model.predict(X_test)
-        test_f1 = f1_score(y_test, y_pred_test, average='weighted')
+    # 6. Log parameters, metrics, and artifacts directly to the active MLflow run context
+    mlflow.log_params({
+        'n_estimators': best_n_est,
+        'max_depth': best_m_depth,
+        'random_state': 42
+    })
 
-        mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
-        mlflow.log_metric('accuracy', best_accuracy)
-        mlflow.log_metric('test_f1_score', test_f1)
+    # Evaluation Metrics
+    y_pred_train = best_model.predict(X_train)
+    y_pred_test = best_model.predict(X_test)
+    test_f1 = f1_score(y_test, y_pred_test, average='weighted')
 
-        # ARTIFACT 1: estimator.html
-        html_repr = estimator_html_repr(best_model)
-        mlflow.log_text(html_repr, artifact_file='estimator.html')
+    mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
+    mlflow.log_metric('accuracy', float(best_accuracy))
+    mlflow.log_metric('test_f1_score', float(test_f1))
 
-        # ARTIFACT 2: metric_info.json 
-        metric_info = {'accuracy': best_accuracy, 'test_f1_score': test_f1}
-        mlflow.log_dict(metric_info, artifact_file='metric_info.json')
+    # ARTIFACT 1: estimator.html
+    html_repr = estimator_html_repr(best_model)
+    mlflow.log_text(html_repr, artifact_file='estimator.html')
 
-        # ARTIFACT 3: Confusion Matrix Plot
-        fig, ax = plt.subplots(figsize=(6, 5))
-        cm = confusion_matrix(y_train, y_pred_train, normalize='true')
-        sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
-        ax.set_title(f"Confusion Matrix (n={best_params['n_estimators']}, depth={best_params['max_depth']})")
-        ax.set_ylabel('Actual')
-        ax.set_xlabel('Predicted')
-        plt.tight_layout()
-        mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
-        plt.close(fig)
+    # ARTIFACT 2: metric_info.json 
+    metric_info = {'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}
+    mlflow.log_dict(metric_info, artifact_file='metric_info.json')
 
-        # ARTIFACT 4: Classification Report 
-        report = classification_report(y_test, y_pred_test)
-        mlflow.log_text(report, artifact_file='reports/classification_report.txt')
+    # ARTIFACT 3: Confusion Matrix Plot
+    fig, ax = plt.subplots(figsize=(6, 5))
+    cm = confusion_matrix(y_train, y_pred_train, normalize='true')
+    sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
+    ax.set_title(f"Confusion Matrix (n={best_n_est}, depth={best_m_depth})")
+    ax.set_ylabel('Actual')
+    ax.set_xlabel('Predicted')
+    plt.tight_layout()
+    mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
+    plt.close(fig)
 
-        # ARTIFACT 5: Filtered Feature Importance Plot
-        importances = best_model.feature_importances_
-        feature_names = X_train.columns  
-        threshold = 0.03
-        important_features_indices = np.where(importances >= threshold)[0]
-        sorted_important_features_indices = important_features_indices[np.argsort(importances[important_features_indices])[::-1]]
-                        
-        if len(sorted_important_features_indices) > 0:
-            fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
-            sns.barplot(
-                x=importances[sorted_important_features_indices],
-                y=feature_names[sorted_important_features_indices],
-                ax=ax_fi,
-                palette='viridis',
-                hue=feature_names[sorted_important_features_indices],
-                legend=False
-            )
-            ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_params['n_estimators']}, depth={best_params['max_depth']})")
-            ax_fi.set_xlabel('Relative Importance')
-            ax_fi.set_ylabel('Features')
-            plt.tight_layout()
-                            
-            mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
-            plt.close(fig_fi)
-        
-        # Model Logging
-        mlflow.sklearn.log_model(
-            sk_model=best_model,
-            artifact_path='model',
-            input_example=input_example
+    # ARTIFACT 4: Classification Report 
+    report = classification_report(y_test, y_pred_test)
+    mlflow.log_text(report, artifact_file='reports/classification_report.txt')
+
+    # ARTIFACT 5: Filtered Feature Importance Plot
+    importances = best_model.feature_importances_
+    feature_names = X_train.columns  
+    threshold = 0.03
+    important_features_indices = np.where(importances >= threshold)[0]
+    sorted_important_features_indices = important_features_indices[np.argsort(importances[important_features_indices])[::-1]]
+                    
+    if len(sorted_important_features_indices) > 0:
+        fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
+        sns.barplot(
+            x=importances[sorted_important_features_indices],
+            y=feature_names[sorted_important_features_indices],
+            ax=ax_fi,
+            palette='viridis',
+            hue=feature_names[sorted_important_features_indices],
+            legend=False
         )
+        ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_n_est}, depth={best_m_depth})")
+        ax_fi.set_xlabel('Relative Importance')
+        ax_fi.set_ylabel('Features')
+        plt.tight_layout()
+                        
+        mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
+        plt.close(fig_fi)
+    
+    # Model Logging
+    mlflow.sklearn.log_model(
+        sk_model=best_model,
+        artifact_path='model',
+        input_example=input_example
+    )
 
-    # 7. Write the single best Run ID into local text file
-    if best_run_id:
+    # 7. Write the active Run ID into a local text file
+    active_run = mlflow.active_run()
+    if active_run:
+        best_run_id = active_run.info.run_id
         with open(os.path.join(current_dir, 'run_id.txt'), 'w') as f:
             f.write(best_run_id)
 
