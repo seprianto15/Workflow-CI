@@ -61,6 +61,7 @@ def main():
     best_n_est = int(best_params['n_estimators'])
     best_m_depth = int(best_params['max_depth'])
 
+    # Safely assign run_name / tag to the active run session managed by MLflow Project
     if mlflow.active_run():
         mlflow.set_tag("mlflow.runName", f"best_run_rf_{best_n_est}_{best_m_depth}")
 
@@ -135,7 +136,7 @@ def main():
         input_example=input_example
     )
 
-    # 7. Write the active Run ID into a local text file
+    # 7. Write the active Run ID into a local text file for downstream CI/CD artifact downloading
     active_run = mlflow.active_run()
     if active_run:
         best_run_id = active_run.info.run_id
