@@ -60,13 +60,15 @@ def main():
     best_n_est = int(best_params['n_estimators'])
     best_m_depth = int(best_params['max_depth'])
 
-    # Menangkap wadah run yang sudah dibuat oleh mlflow run secara otomatis
+    # Menangkap wadah run yang sudah diinisialisasi oleh mlflow run
     active_run = mlflow.active_run()
     if active_run:
-        # Berikan nama/tag pada run yang sedang aktif
-        mlflow.set_tag("mlflow.runName", f"best_run_rf_{best_n_est}_{best_m_depth}")
+        best_run_id = active_run.info.run_id
         
-        # 6. Catat parameter, metrik, dan artefak langsung ke active run
+        # Berikan label atau nama run secara dinamis
+        mlflow.set_tag("mlflow.runName", f"best_run_rf_{best_n_est}_{best_m_depth}")
+
+        # 6. Catat parameter, metrik, dan artefak langsung ke active run context
         mlflow.log_params({
             'n_estimators': best_n_est,
             'max_depth': best_m_depth,
@@ -136,10 +138,10 @@ def main():
             input_example=input_example
         )
 
-        # 7. Simpan Run ID untuk dibaca GitHub Actions
-        best_run_id = active_run.info.run_id
-        with open(os.path.join(current_dir, 'run_id.txt'), 'w') as f:
+        # 7. Tulis Run ID ke file teks agar bisa dibaca oleh GitHub Actions
+        with open('run_id.txt', 'w') as f:
             f.write(best_run_id)
+        print(f"Run ID successfully written to run_id.txt: {best_run_id}")
     else:
         print("Error: No active MLflow run detected. Ensure 'mlflow run' initiates the environment.")
 
