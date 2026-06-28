@@ -10,35 +10,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
 
-def main():
-    # 1. Configure environment variables and DagsHub credentials
-    os.environ['MLFLOW_TRACKING_USERNAME'] = os.getenv('DAGSHUB_USERNAME', '')
-    os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN', '')
-
-    # 2. Setup MLflow tracking remote URI
-    os.environ['MLFLOW_TRACKING_URI'] = os.getenv('MLFLOW_TRACKING_URI', '')
-
-    # 3. Load dataset using safe relative pathing
-    current_dir = os.path.dirname(os.path.abspath(__file__))  
-    project_root = os.path.dirname(current_dir)              
-    
+def load_dataset(current_dir):
+    """Memuat dataset students performance."""
     data_path = os.path.join(current_dir, 'data', 'final_data_students.csv')
-    
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset tidak ditemukan pada path: {data_path}")
-    
-    data = pd.read_csv(data_path)
+    return pd.read_csv(data_path)
 
-    # 4. Split dataset into train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(
-        data.drop(['Status', 'Student_ID'], axis=1),
-        data['Status'],
-        random_state=42,
-        test_size=0.2
-    )
-    input_example = X_train[0:5]
-
-    # 5. Set up parameter Random Search
+def perform_tuning(X_train, y_train, X_test, y_test):
+    """Melakukan hyperparameter tuning sederhana menggunakan Random Search manual."""
     n_estimators_range = np.linspace(10, 100, 5, dtype=int)
     max_depth_range = np.linspace(1, 20, 5, dtype=int)
 
@@ -46,28 +26,52 @@ def main():
     best_model = None
     best_params = {}
 
-    print("Starting hyperparameter tuning local")
-    for n_estimators in n_estimators_range:
-        for max_depth in max_depth_range:
-            model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+    print("Starting hyperparameter tuning local...")
+    for n_est in n_estimators_range:
+        for m_depth in max_depth_range:
+            model = RandomForestClassifier(n_estimators=n_est, max_depth=m_depth, random_state=42)
             model.fit(X_train, y_train)
             
-            y_pred_test = model.predict(X_test)
-            test_accuracy = accuracy_score(y_test, y_pred_test)
+            y_pred = model.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
 
-            if test_accuracy > best_accuracy:
-                best_accuracy = test_accuracy
+            if acc > best_accuracy:
+                best_accuracy = acc
                 best_model = model
-                best_params = {'n_estimators': n_estimators, 'max_depth': max_depth}
+                best_params = {'n_estimators': n_est, 'max_depth': m_depth}
 
-    print(f"Tuning finished. Best Accuracy: {best_accuracy} Best Params: {best_params}")
+    print(f"Tuning finished. Best Accuracy: {best_accuracy:.4f}")
+    return best_model, best_params, best_accuracy
+
+def main():
+    # 1. Konfigurasi Kredensial DagsHub & MLflow
+    os.environ['MLFLOW_TRACKING_USERNAME'] = os.getenv('DAGSHUB_USERNAME', '')
+    os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN', '')
+    os.environ['MLFLOW_TRACKING_URI'] = os.getenv('MLFLOW_TRACKING_URI', '')
+
+    mlflow.set_experiment('Students-Performance')
+
+    # 2. Pathing Dataset
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    
+    data = load_dataset(current_dir)
+
+    # 3. Split Dataset
+    X = data.drop(['Status', 'Student_ID'], axis=1)
+    y = data['Status']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.2)
+
+    # 4. Proses Training & Tuning Model
+    best_model, best_params, best_accuracy = perform_tuning(X_train, y_train, X_test, y_test)
 
     best_n_est = int(best_params['n_estimators'])
     best_m_depth = int(best_params['max_depth'])
 
-    # 6. Logging parameters, metrics, and artifacts directly to the active MLflow run context
-    # Catatan: mlflow run secara otomatis mengelola active run, kita cukup mengeceknya
-    if mlflow.active_run():
+    # 5. Manajemen Sesi Run MLflow (Optimal: Dibuka setelah proses komputasi tuning sukses)
+    is_active_run = mlflow.active_run() is not None
+    with mlflow.start_run(nested=True) if not is_active_run else mlflow.active_run() as run:
+        
         mlflow.set_tag("mlflow.runName", f"best_run_rf_{best_n_est}_{best_m_depth}")
 
         mlflow.log_params({
@@ -76,7 +80,7 @@ def main():
             'random_state': 42
         })
 
-        # Evaluation Metrics
+        # Prediksi Evaluasi
         y_pred_train = best_model.predict(X_train)
         y_pred_test = best_model.predict(X_test)
         test_f1 = f1_score(y_test, y_pred_test, average='weighted')
@@ -85,15 +89,13 @@ def main():
         mlflow.log_metric('accuracy', float(best_accuracy))
         mlflow.log_metric('test_f1_score', float(test_f1))
 
-        # ARTIFACT 1: estimator.html
-        html_repr = estimator_html_repr(best_model)
-        mlflow.log_text(html_repr, artifact_file='estimator.html')
+        # ARTIFACT 1: Representasi HTML Model
+        mlflow.log_text(estimator_html_repr(best_model), artifact_file='estimator.html')
 
-        # ARTIFACT 2: metric_info.json 
-        metric_info = {'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}
-        mlflow.log_dict(metric_info, artifact_file='metric_info.json')
+        # ARTIFACT 2: JSON Informasi Metrik
+        mlflow.log_dict({'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}, artifact_file='metric_info.json')
 
-        # ARTIFACT 3: Confusion Matrix Plot
+        # ARTIFACT 3: Plot Confusion Matrix
         fig, ax = plt.subplots(figsize=(6, 5))
         cm = confusion_matrix(y_train, y_pred_train, normalize='true')
         sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
@@ -104,53 +106,40 @@ def main():
         mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
         plt.close(fig)
 
-        # ARTIFACT 4: Classification Report 
-        report = classification_report(y_test, y_pred_test)
-        mlflow.log_text(report, artifact_file='reports/classification_report.txt')
+        # ARTIFACT 4: Klasifikasi Report
+        mlflow.log_text(classification_report(y_test, y_pred_test), artifact_file='reports/classification_report.txt')
 
-        # ARTIFACT 5: Filtered Feature Importance Plot
+        # ARTIFACT 5: Filter Feature Importance Plot
         importances = best_model.feature_importances_
-        feature_names = X_train.columns  
         threshold = 0.03
-        important_features_indices = np.where(importances >= threshold)[0]
-        sorted_important_features_indices = important_features_indices[np.argsort(importances[important_features_indices])[::-1]]
+        important_idx = np.where(importances >= threshold)[0]
+        sorted_idx = important_idx[np.argsort(importances[important_idx])[::-1]]
                     
-        if len(sorted_important_features_indices) > 0:
+        if len(sorted_idx) > 0:
             fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
             sns.barplot(
-                x=importances[sorted_important_features_indices],
-                y=feature_names[sorted_important_features_indices],
+                x=importances[sorted_idx],
+                y=X_train.columns[sorted_idx],
                 ax=ax_fi,
                 palette='viridis',
-                hue=feature_names[sorted_important_features_indices],
+                hue=X_train.columns[sorted_idx],
                 legend=False
             )
             ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_n_est}, depth={best_m_depth})")
             ax_fi.set_xlabel('Relative Importance')
             ax_fi.set_ylabel('Features')
             plt.tight_layout()
-                        
             mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
             plt.close(fig_fi)
         
-        # Model Logging
-        mlflow.sklearn.log_model(
-            sk_model=best_model,
-            artifact_path='model',
-            input_example=input_example
-        )
+        # Logging Model Utama
+        mlflow.sklearn.log_model(sk_model=best_model, artifact_path='model', input_example=X_train[0:5])
 
-        # 7. Write the active Run ID into a text file in the project's main root directory
-        active_run = mlflow.active_run()
-        if active_run:
-            best_run_id = active_run.info.run_id
-            run_id_path = os.path.join(project_root, 'run_id.txt')
-        
-            with open(run_id_path, 'w') as f:
-                f.write(best_run_id)
-            print(f"Run ID successfully written to: {run_id_path}")
-    else:
-        print("Peringatan: Tidak ada sesi MLflow aktif yang terdeteksi.")
+        # 6. Ekspor Run ID ke root directory agar dapat ditarik oleh CI/CD GitHub Actions
+        run_id_path = os.path.join(project_root, 'run_id.txt')
+        with open(run_id_path, 'w') as f:
+            f.write(run.info.run_id)
+        print(f"Run ID successfully written to: {run_id_path}")
 
 if __name__ == '__main__':
     main()
