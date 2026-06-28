@@ -51,10 +51,12 @@ def main():
 
     mlflow.set_experiment('Students-Performance')
 
-    if not mlflow.active_run():
-        mlflow.start_run()
-
-    current_run_id = mlflow.active_run().info.run_id
+    # PERBAIKAN: Ambil langsung ID dari active_run yang di-inject oleh mlflow run .
+    active_run = mlflow.active_run()
+    if not active_run:
+        raise RuntimeError("Gagal mendeteksi active run dari mlflow run. Pastikan konfigurasi MLproject sesuai.")
+    
+    current_run_id = active_run.info.run_id
     print(f"Menggunakan Active Run ID: {current_run_id}")    
 
     # 2. Pathing Dataset
