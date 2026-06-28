@@ -15,13 +15,12 @@ def main():
     os.environ['MLFLOW_TRACKING_USERNAME'] = os.getenv('DAGSHUB_USERNAME', '')
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN', '')
 
-    # 2. Setup MLflow tracking remote URI and experiment
-    mlflow.set_tracking_uri('https://dagshub.com/seprianto15/Workflow-CI.mlflow')
-    mlflow.set_experiment('Students-Performance')
+    # 2. Setup MLflow tracking remote URI
+    os.environ['MLFLOW_TRACKING_URI'] = os.getenv('MLFLOW_TRACKING_URI', '')
 
     # 3. Load dataset using safe relative pathing
-    current_dir = os.path.dirname(os.path.abspath(__file__))  # Folder MLProject/
-    project_root = os.path.dirname(current_dir)              # Root directory utama (Workflow-CI/)
+    current_dir = os.path.dirname(os.path.abspath(__file__))  
+    project_root = os.path.dirname(current_dir)              
     
     data_path = os.path.join(current_dir, 'data', 'final_data_students.csv')
     

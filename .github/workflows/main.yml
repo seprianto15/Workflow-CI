@@ -43,8 +43,9 @@ jobs:
           fi
       
       # Run MLflow Project
-      - name: Run MLflow Project Tuning
+      - name: Run ml flow project
         env:
+          MLFLOW_TRACKING_URI: https://dagshub.com/seprianto15/Workflow-CI.mlflow
           DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
