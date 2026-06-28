@@ -20,14 +20,17 @@ def main():
     mlflow.set_experiment('Students-Performance')
 
     # 3. Load dataset using safe relative pathing
-    current_dir = os.path.dirname(os.path.abspath(__file__)) # Ini adalah folder MLProject/
-    project_root = os.path.dirname(current_dir)             # Ini adalah root directory (Workflow-CI/)
-    data_path = os.path.join(project_root, 'data', 'final_data_students.csv')
+    current_dir = os.path.dirname(os.path.abspath(__file__))  # Folder MLProject/
+    project_root = os.path.dirname(current_dir)               # Root directory utama (Workflow-CI/)
+    
+    # 3. Load dataset
+    data_path = os.path.join(current_dir, 'data', 'final_data_students.csv')
     
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset tidak ditemukan pada path: {data_path}")
     
     data = pd.read_csv(data_path)
+    
 
     # 4. Split dataset into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(
