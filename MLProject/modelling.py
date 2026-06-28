@@ -51,8 +51,14 @@ def main():
 
     mlflow.set_experiment('Students-Performance')
 
+    if not mlflow.active_run():
+        mlflow.start_run()
+
+    current_run_id = mlflow.active_run().info.run_id
+    print(f"Menggunakan Active Run ID: {current_run_id}")    
+
     # 2. Pathing Dataset
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = os.path.dirname(os.path.abspath(__file__))  
     project_root = os.path.dirname(current_dir)
     
     data = load_dataset(current_dir)
@@ -136,10 +142,8 @@ def main():
         # 6. Ekspor Run ID ke root directory agar dapat ditarik oleh CI/CD GitHub Actions
         run_id_path = os.path.join(project_root, 'run_id.txt')
         with open(run_id_path, 'w') as f:
-            f.write(mlflow.active_run().info.run_id)
+            f.write(current_run_id)
         print(f"Run ID successfully written to: {run_id_path}")
-    else:
-        print("Peringatan: Tidak ada active run MLflow yang terdeteksi.")
-        
+
 if __name__ == '__main__':
     main()
