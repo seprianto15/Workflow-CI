@@ -150,6 +150,8 @@ def main():
             with open(run_id_path, 'w') as f:
                 f.write(best_run_id)
             print(f"Run ID successfully written to: {run_id_path}")
+    else:
+        print("Peringatan: Tidak ada sesi MLflow aktif yang terdeteksi.")
 
 if __name__ == '__main__':
     main()
