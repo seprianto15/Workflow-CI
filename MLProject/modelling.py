@@ -21,16 +21,14 @@ def main():
 
     # 3. Load dataset using safe relative pathing
     current_dir = os.path.dirname(os.path.abspath(__file__))  # Folder MLProject/
-    project_root = os.path.dirname(current_dir)               # Root directory utama (Workflow-CI/)
+    project_root = os.path.dirname(current_dir)              # Root directory utama (Workflow-CI/)
     
-    # 3. Load dataset
     data_path = os.path.join(current_dir, 'data', 'final_data_students.csv')
     
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset tidak ditemukan pada path: {data_path}")
     
     data = pd.read_csv(data_path)
-    
 
     # 4. Split dataset into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(
@@ -68,88 +66,90 @@ def main():
     best_n_est = int(best_params['n_estimators'])
     best_m_depth = int(best_params['max_depth'])
 
-    # 6. Menggunakan start_run agar sesi aktif terdaftar dengan benar di DagsHub dan MLflow
+    # 6. Logging parameters, metrics, and artifacts directly to the active MLflow run context
+    # Catatan: mlflow run secara otomatis mengelola active run, kita cukup mengeceknya
     if mlflow.active_run():
         mlflow.set_tag("mlflow.runName", f"best_run_rf_{best_n_est}_{best_m_depth}")
 
         mlflow.log_params({
-        'n_estimators': best_n_est,
-        'max_depth': best_m_depth,
-        'random_state': 42
-    })
+            'n_estimators': best_n_est,
+            'max_depth': best_m_depth,
+            'random_state': 42
+        })
 
-    # Evaluation Metrics
-    y_pred_train = best_model.predict(X_train)
-    y_pred_test = best_model.predict(X_test)
-    test_f1 = f1_score(y_test, y_pred_test, average='weighted')
+        # Evaluation Metrics
+        y_pred_train = best_model.predict(X_train)
+        y_pred_test = best_model.predict(X_test)
+        test_f1 = f1_score(y_test, y_pred_test, average='weighted')
 
-    mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
-    mlflow.log_metric('accuracy', float(best_accuracy))
-    mlflow.log_metric('test_f1_score', float(test_f1))
+        mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
+        mlflow.log_metric('accuracy', float(best_accuracy))
+        mlflow.log_metric('test_f1_score', float(test_f1))
 
-    # ARTIFACT 1: estimator.html
-    html_repr = estimator_html_repr(best_model)
-    mlflow.log_text(html_repr, artifact_file='estimator.html')
+        # ARTIFACT 1: estimator.html
+        html_repr = estimator_html_repr(best_model)
+        mlflow.log_text(html_repr, artifact_file='estimator.html')
 
-    # ARTIFACT 2: metric_info.json 
-    metric_info = {'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}
-    mlflow.log_dict(metric_info, artifact_file='metric_info.json')
+        # ARTIFACT 2: metric_info.json 
+        metric_info = {'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}
+        mlflow.log_dict(metric_info, artifact_file='metric_info.json')
 
-    # ARTIFACT 3: Confusion Matrix Plot
-    fig, ax = plt.subplots(figsize=(6, 5))
-    cm = confusion_matrix(y_train, y_pred_train, normalize='true')
-    sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
-    ax.set_title(f"Confusion Matrix (n={best_n_est}, depth={best_m_depth})")
-    ax.set_ylabel('Actual')
-    ax.set_xlabel('Predicted')
-    plt.tight_layout()
-    mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
-    plt.close(fig)
-
-    # ARTIFACT 4: Classification Report 
-    report = classification_report(y_test, y_pred_test)
-    mlflow.log_text(report, artifact_file='reports/classification_report.txt')
-
-    # ARTIFACT 5: Filtered Feature Importance Plot
-    importances = best_model.feature_importances_
-    feature_names = X_train.columns  
-    threshold = 0.03
-    important_features_indices = np.where(importances >= threshold)[0]
-    sorted_important_features_indices = important_features_indices[np.argsort(importances[important_features_indices])[::-1]]
-            
-    if len(sorted_important_features_indices) > 0:
-        fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
-        sns.barplot(
-            x=importances[sorted_important_features_indices],
-            y=feature_names[sorted_important_features_indices],
-            ax=ax_fi,
-            palette='viridis',
-            hue=feature_names[sorted_important_features_indices],
-            legend=False
-        )
-        ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_n_est}, depth={best_m_depth})")
-        ax_fi.set_xlabel('Relative Importance')
-        ax_fi.set_ylabel('Features')
+        # ARTIFACT 3: Confusion Matrix Plot
+        fig, ax = plt.subplots(figsize=(6, 5))
+        cm = confusion_matrix(y_train, y_pred_train, normalize='true')
+        sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
+        ax.set_title(f"Confusion Matrix (n={best_n_est}, depth={best_m_depth})")
+        ax.set_ylabel('Actual')
+        ax.set_xlabel('Predicted')
         plt.tight_layout()
-                    
-        mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
-        plt.close(fig_fi)
-    
-    # Model Logging
-    mlflow.sklearn.log_model(
-        sk_model=best_model,
-        artifact_path='model',
-        input_example=input_example
-    )
+        mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
+        plt.close(fig)
 
-    # 7. Write the active Run ID into a local text file 
-    active_run = mlflow.active_run()
-    if active_run:
-        best_run_id = active_run.info.run_id
+        # ARTIFACT 4: Classification Report 
+        report = classification_report(y_test, y_pred_test)
+        mlflow.log_text(report, artifact_file='reports/classification_report.txt')
+
+        # ARTIFACT 5: Filtered Feature Importance Plot
+        importances = best_model.feature_importances_
+        feature_names = X_train.columns  
+        threshold = 0.03
+        important_features_indices = np.where(importances >= threshold)[0]
+        sorted_important_features_indices = important_features_indices[np.argsort(importances[important_features_indices])[::-1]]
+                    
+        if len(sorted_important_features_indices) > 0:
+            fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
+            sns.barplot(
+                x=importances[sorted_important_features_indices],
+                y=feature_names[sorted_important_features_indices],
+                ax=ax_fi,
+                palette='viridis',
+                hue=feature_names[sorted_important_features_indices],
+                legend=False
+            )
+            ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_n_est}, depth={best_m_depth})")
+            ax_fi.set_xlabel('Relative Importance')
+            ax_fi.set_ylabel('Features')
+            plt.tight_layout()
+                        
+            mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
+            plt.close(fig_fi)
         
-        # Mendapatkan root directory dari inisialisasi path sebelumnya
-        run_id_path = os.path.join(project_root, 'run_id.txt')
-        
-        with open(run_id_path, 'w') as f:
-            f.write(best_run_id)
-        print(f"Run ID successfully written to: {run_id_path}")
+        # Model Logging
+        mlflow.sklearn.log_model(
+            sk_model=best_model,
+            artifact_path='model',
+            input_example=input_example
+        )
+
+        # 7. Write the active Run ID into a text file in the project's main root directory
+        active_run = mlflow.active_run()
+        if active_run:
+            best_run_id = active_run.info.run_id
+            run_id_path = os.path.join(project_root, 'run_id.txt')
+            
+            with open(run_id_path, 'w') as f:
+                f.write(best_run_id)
+            print(f"Run ID successfully written to: {run_id_path}")
+
+if __name__ == '__main__':
+    main()
