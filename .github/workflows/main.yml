@@ -64,7 +64,7 @@ jobs:
           echo "Captured MLFLOW_RUN_ID: $RUN_ID"
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
-      # 8. Save models to GitHub Repository
+      # Save models to GitHub Repository
       - name: Upload to Github
         run: |
           git config --global user.name "${{ secrets.username }}"
@@ -74,6 +74,24 @@ jobs:
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git pull origin main --rebase
           git push origin main
+      
+      - name: Build Docker Model
+        run: |
+          mlflow models build-docker --model-uri 'runs:/$RUN_ID/model' --name 'cc'
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      
+      - name: Tag Docker Image
+        run: |
+          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
 
 
           
