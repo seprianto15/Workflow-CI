@@ -15,8 +15,8 @@ flavors:
     sklearn_version: 1.9.0
 mlflow_version: 2.18.0
 model_size_bytes: 7682395
-model_uuid: d4f8a1c9e2c242389ec945b3e7488297
-run_id: 6c2f9706efaf4398949cee83d52d7a1a
+model_uuid: 3dc5cf76e5254c55a720cf37838141b5
+run_id: cf1000b27ced42bdb237c4968545a518
 saved_input_example_info:
   artifact_path: input_example.json
   pandas_orient: split
@@ -131,4 +131,4 @@ signature:
     true}, {"type": "double", "name": "Age_at_enrollment_55+", "required": true}]'
   outputs: '[{"type": "long", "required": true}]'
   params: null
-utc_time_created: '2026-06-30 21:45:23.943903'
+utc_time_created: '2026-06-30 22:44:12.027473'
