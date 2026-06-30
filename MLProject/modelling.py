@@ -16,11 +16,11 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     np.random.seed(40)
 
-    # 1. Menentukan path dataset secara dinamis
+    # 1. Init path dataset
     file_path = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/final_data_students.csv')
     data = pd.read_csv(file_path)
 
-    # 2. Memisahkan fitur dan target
+    # 2. Split dataset into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(
         data.drop(['Status', 'Student_ID'], axis=1),
         data['Status'],
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     n_estimators = int(sys.argv[1]) if len(sys.argv) > 1 else 70
     max_depth = int(sys.argv[2]) if len(sys.argv) > 2 else 15
 
-    # 3. Inisialisasi dan latih model
+    # 3. Initialize and fit the Random Forest Classifier
     model = RandomForestClassifier(
         n_estimators=n_estimators,
         max_depth=max_depth,
@@ -111,9 +111,13 @@ if __name__ == "__main__":
         input_example=input_example
     )
 
-    # 7. Simpan Run ID 
+    # 7. Save Run ID for CI/CD pipeline automation
     run_id = mlflow.active_run().info.run_id
-    print(f"MLFLOW_RUN_ID:{run_id}")
+    print(f"MLFLOW_RUN_ID: {run_id}")
+    
+    # Write the active run ID to a text file in the current working directory
     with open(os.path.join(os.getcwd(), "run_id.txt"), "w") as f:
         f.write(run_id)
-    print(f"Run ID {run_id} berhasil disimpan ke run_id.txt")
+        
+    print(f"Run ID {run_id} successfully saved")
+

@@ -50,10 +50,11 @@ jobs:
           cd MLProject
           mlflow run . --env-manager=local
 
-      - name: Read and Set Run ID
+      # Read and Set Run ID
+      - name: Get latest Mlflow run_id
         run: |
           cd MLProject
-          # Membaca isi file run_id.txt yang telah diekspor
+          
           RUN_ID=$(cat run_id.txt)
           echo "Captured MLFLOW_RUN_ID: $RUN_ID"
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
