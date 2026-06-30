@@ -69,74 +69,78 @@ def main():
     best_m_depth = int(best_params['max_depth'])
 
     # 4. Manajemen Sesi Run MLflow (Pasti aman dengan context manager with) 
-    mlflow.log_params({
-        'n_estimators': best_n_est,
-        'max_depth': best_m_depth,
-        'random_state': 42
-    })
+    active_run = mlflow.active_run()
+
+    if active_run:
+        current_run_id = active_run.info.run_id
+        print(f"Menyambungkan ke MLflow run dengan ID aktif: {current_run_id}")
         
-    # Prediksi Evaluasi
-    y_pred_train = best_model.predict(X_train)
-    y_pred_test = best_model.predict(X_test)
-    test_f1 = f1_score(y_test, y_pred_test, average='weighted')
+        mlflow.log_params({
+            'n_estimators': best_n_est,
+            'max_depth': best_m_depth,
+            'random_state': 42
+        })
+        
+        # Prediksi Evaluasi
+        y_pred_train = best_model.predict(X_train)
+        y_pred_test = best_model.predict(X_test)
+        test_f1 = f1_score(y_test, y_pred_test, average='weighted')
 
-    mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
-    mlflow.log_metric('accuracy', float(best_accuracy))
-    mlflow.log_metric('test_f1_score', float(test_f1))
+        mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
+        mlflow.log_metric('accuracy', float(best_accuracy))
+        mlflow.log_metric('test_f1_score', float(test_f1))
 
-    # ARTIFACT 1: Representasi HTML Model
-    mlflow.log_text(estimator_html_repr(best_model), artifact_file='estimator.html')
+        # ARTIFACT 1: Representasi HTML Model
+        mlflow.log_text(estimator_html_repr(best_model), artifact_file='estimator.html')
 
-    # ARTIFACT 2: JSON Informasi Metrik
-    mlflow.log_dict({'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}, artifact_file='metric_info.json')
+        # ARTIFACT 2: JSON Informasi Metrik
+        mlflow.log_dict({'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}, artifact_file='metric_info.json')
 
-    # ARTIFACT 3: Plot Confusion Matrix
-    fig, ax = plt.subplots(figsize=(6, 5))
-    cm = confusion_matrix(y_train, y_pred_train, normalize='true')
-    sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
-    ax.set_title(f"Confusion Matrix (n={best_n_est}, depth={best_m_depth})")
-    ax.set_ylabel('Actual')
-    ax.set_xlabel('Predicted')
-    plt.tight_layout()
-    mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
-    plt.close(fig)
-
-    # ARTIFACT 4: Klasifikasi Report
-    os.makedirs('reports', exist_ok=True)
-    mlflow.log_text(classification_report(y_test, y_pred_test), artifact_file='reports/classification_report.txt')
-
-    # ARTIFACT 5: Filter Feature Importance Plot
-    importances = best_model.feature_importances_
-    threshold = 0.03
-    important_idx = np.where(importances >= threshold)[0]
-    sorted_idx = important_idx[np.argsort(importances[important_idx])[::-1]]
-                
-    if len(sorted_idx) > 0:
-        os.makedirs('plots', exist_ok=True)
-        fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
-        sns.barplot(
-            x=importances[sorted_idx],
-            y=X_train.columns[sorted_idx],
-            ax=ax_fi,
-            color='teal' 
-        )
-        ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_n_est}, depth={best_m_depth})")
-        ax_fi.set_xlabel('Relative Importance')
-        ax_fi.set_ylabel('Features')
+        # ARTIFACT 3: Plot Confusion Matrix
+        fig, ax = plt.subplots(figsize=(6, 5))
+        cm = confusion_matrix(y_train, y_pred_train, normalize='true')
+        sns.heatmap(cm, annot=True, fmt='.4g', cmap="Blues", ax=ax)
+        ax.set_title(f"Confusion Matrix (n={best_n_est}, depth={best_m_depth})")
+        ax.set_ylabel('Actual')
+        ax.set_xlabel('Predicted')
         plt.tight_layout()
-        mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
-        plt.close(fig_fi)
-        
-    # Logging Model Utama
-    mlflow.sklearn.log_model(sk_model=best_model, artifact_path='model', input_example=input_example)
+        mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
+        plt.close(fig)
 
-    # 5. Ekspor Run ID ke root directory agar dapat ditarik oleh CI/CD GitHub Actions
-    run_id = mlflow.active_run().info.run_id
-    print(f'MLFLOW_RUN_ID:{run_id}')
-    txt_path = os.path.join(base_dir, 'run_id.txt')
-    with open(txt_path, 'w') as f:
-        f.write(run_id) 
-        print(f'RUN ID {run_id} berhasil disimpan ke {txt_path}')
+        # ARTIFACT 4: Klasifikasi Report
+        os.makedirs('reports', exist_ok=True)
+        mlflow.log_text(classification_report(y_test, y_pred_test), artifact_file='reports/classification_report.txt')
+
+        # ARTIFACT 5: Filter Feature Importance Plot
+        importances = best_model.feature_importances_
+        threshold = 0.03
+        important_idx = np.where(importances >= threshold)[0]
+        sorted_idx = important_idx[np.argsort(importances[important_idx])[::-1]]
+                
+        if len(sorted_idx) > 0:
+            os.makedirs('plots', exist_ok=True)
+            fig_fi, ax_fi = plt.subplots(figsize=(10, 6))
+            sns.barplot(
+                x=importances[sorted_idx],
+                y=X_train.columns[sorted_idx],
+                ax=ax_fi,
+                color='teal' 
+            )
+            ax_fi.set_title(f"Feature Importance >= {threshold} (n={best_n_est}, depth={best_m_depth})")
+            ax_fi.set_xlabel('Relative Importance')
+            ax_fi.set_ylabel('Features')
+            plt.tight_layout()
+            mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
+            plt.close(fig_fi)
+        
+        # Logging Model Utama
+        mlflow.sklearn.log_model(sk_model=best_model, artifact_path='model', input_example=input_example)
+
+        # 5. Ekspor Run ID ke root directory agar dapat ditarik oleh CI/CD GitHub Actions
+        txt_path = os.path.join(base_dir, 'run_id.txt')
+        with open(txt_path, 'w') as f:
+            f.write(current_run_id) 
+        print(f'RUN ID {current_run_id} berhasil disimpan ke {txt_path}')
 
 if __name__ == '__main__':
     main()  
