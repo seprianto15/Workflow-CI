@@ -32,15 +32,7 @@ if __name__ == "__main__":
     n_estimators = int(sys.argv[1]) if len(sys.argv) > 1 else 70
     max_depth = int(sys.argv[2]) if len(sys.argv) > 2 else 15
 
-    # 3. Mendapatkan active run dari MLflow
-    active_run = mlflow.active_run()
-    if not active_run:
-        raise RuntimeError("MLflow active run tidak ditemukan. Pastikan dieksekusi melalui 'mlflow run'.")
-
-    run_id = active_run.info.run_id
-    print(f"Menyambungkan ke MLflow run dengan ID aktif: {run_id}")
-
-    # 4. Inisialisasi dan latih model
+    # 3. Inisialisasi dan latih model
     model = RandomForestClassifier(
         n_estimators=n_estimators,
         max_depth=max_depth,
@@ -49,7 +41,7 @@ if __name__ == "__main__":
     )
     model.fit(X_train, y_train)
 
-    # 5. Evaluasi Metrik
+    # 4. Evaluasi Metrik
     train_accuracy = model.score(X_train, y_train)
     y_pred_train = model.predict(X_train)
 
@@ -64,7 +56,7 @@ if __name__ == "__main__":
         'test_f1_score': test_f1
     })
 
-    # 6. ARTIFACTS
+    # 5. ARTIFACTS
     # Artifact 1: estimator.html
     mlflow.log_text(estimator_html_repr(model), artifact_file='estimator.html')
 
@@ -112,18 +104,16 @@ if __name__ == "__main__":
         mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
         plt.close(fig_fi)
     
-    # 7. Model Logging (Dikeluarkan dari pengecekan plot agar selalu tercatat)
+    # 6. Model Logging (Dikeluarkan dari pengecekan plot agar selalu tercatat)
     mlflow.sklearn.log_model(
         sk_model=model,
         artifact_path='model',
         input_example=input_example
     )
 
-    # 8. Simpan Run ID ke file teks (Direktori diambil dari file_path)
-    output_dir = os.path.dirname(file_path)
-    os.makedirs(output_dir, exist_ok=True)
-    
-    txt_path = os.path.join(output_dir, 'run_id.txt')
-    with open(txt_path, 'w') as f:
-        f.write(run_id) 
-    print(f'RUN ID {run_id} berhasil disimpan ke {txt_path}')
+    # 7. Simpan Run ID 
+    run_id = mlflow.active_run().info.run_id
+    print(f"MLFLOW_RUN_ID:{run_id}")
+    with open(os.path.join(os.getcwd(), "run_id.txt"), "w") as f:
+        f.write(run_id)
+    print(f"Run ID {run_id} berhasil disimpan ke run_id.txt")
