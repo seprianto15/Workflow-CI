@@ -78,6 +78,7 @@ jobs:
           git add -f MLProject/mlruns/
           git add MLProject/run_id.txt
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
+          git pull origin main --rebase
           git push origin main
 
           
