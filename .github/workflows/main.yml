@@ -48,6 +48,8 @@ jobs:
       - name: Run mlflow project
         run: |
           cd MLProject
+          rm -rf mlruns
+          rm -f run_id.txt
           mlflow run . --env-manager=local
 
       # Read and Set Run ID
