@@ -68,6 +68,7 @@ jobs:
            git lfs track "MLProject/mlruns/**"
            git add .gitattributes
            git commit -m "Track large files in mlruns with Git LFS" || true
+           git pull origin main --rebase
            git push origin main
 
       # 8. Save models to GitHub Repository
@@ -80,5 +81,6 @@ jobs:
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git pull origin main --rebase
           git push origin main
+
 
           
