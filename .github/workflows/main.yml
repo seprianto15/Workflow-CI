@@ -76,10 +76,8 @@ jobs:
           git push origin main
       
       - name: Build Docker Model
-        env:
-          # Pastikan path absolut ke folder mlruns terbaca
-          MLFLOW_TRACKING_URI: file:///${{ github.workspace }}/MLProject
         run: |
+          cd MLProject
           mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "cc"
       
       - name: Log in to Docker Hub
