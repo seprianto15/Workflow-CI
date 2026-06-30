@@ -1,3 +1,6 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:9468e25cf1aa7fc1f3a9ac5fa38784eb182bc9a24dc2271eef336276c20702fc
-size 205
+artifact_location: file:///home/runner/work/Workflow-CI/Workflow-CI/MLProject/mlruns/0
+creation_time: 1782855921037
+experiment_id: '0'
+last_update_time: 1782855921037
+lifecycle_stage: active
+name: Default
