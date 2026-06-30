@@ -55,7 +55,9 @@ jobs:
       - name: Read and Set Run ID
         run: |
           cd MLProject
-          # Membaca isi file teks dan menyimpannya ke variabel RUN_ID di environment GitHub Actions
+          # Membaca isi file run_id.txt yang diekspor dari skrip Python
           RUN_ID=$(cat run_id.txt)
-          echo "Retrieved Run ID: $RUN_ID"
+          echo "Captured MLFLOW_RUN_ID: $RUN_ID"
+          
+          # Mendaftarkan RUN_ID ke environment GitHub Actions agar step selanjutnya bisa akses
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
