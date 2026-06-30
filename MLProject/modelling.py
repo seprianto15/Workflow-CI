@@ -69,32 +69,34 @@ def main():
     best_m_depth = int(best_params['max_depth'])
 
     # 4. Manajemen Sesi Run MLflow (Pasti aman dengan context manager with) 
+    # 4. Manajemen Sesi Run MLflow (Mengambil dan mengikat ke Run ID yang dibuat terminal CLI)
     active_run = mlflow.active_run()
 
     if active_run:
         current_run_id = active_run.info.run_id
         print(f"Menyambungkan ke MLflow run dengan ID aktif: {current_run_id}")
         
+        # Lakukan logging dengan mengikat run_id secara eksplisit jika diperlukan oleh wrapper CLI
         mlflow.log_params({
             'n_estimators': best_n_est,
             'max_depth': best_m_depth,
             'random_state': 42
-        })
+        }, run_id=current_run_id)
         
         # Prediksi Evaluasi
         y_pred_train = best_model.predict(X_train)
         y_pred_test = best_model.predict(X_test)
         test_f1 = f1_score(y_test, y_pred_test, average='weighted')
 
-        mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train))
-        mlflow.log_metric('accuracy', float(best_accuracy))
-        mlflow.log_metric('test_f1_score', float(test_f1))
+        mlflow.log_metric('train_accuracy', accuracy_score(y_train, y_pred_train), run_id=current_run_id)
+        mlflow.log_metric('accuracy', float(best_accuracy), run_id=current_run_id)
+        mlflow.log_metric('test_f1_score', float(test_f1), run_id=current_run_id)
 
         # ARTIFACT 1: Representasi HTML Model
-        mlflow.log_text(estimator_html_repr(best_model), artifact_file='estimator.html')
+        mlflow.log_text(estimator_html_repr(best_model), artifact_file='estimator.html', run_id=current_run_id)
 
         # ARTIFACT 2: JSON Informasi Metrik
-        mlflow.log_dict({'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}, artifact_file='metric_info.json')
+        mlflow.log_dict({'accuracy': float(best_accuracy), 'test_f1_score': float(test_f1)}, artifact_file='metric_info.json', run_id=current_run_id)
 
         # ARTIFACT 3: Plot Confusion Matrix
         fig, ax = plt.subplots(figsize=(6, 5))
@@ -104,12 +106,12 @@ def main():
         ax.set_ylabel('Actual')
         ax.set_xlabel('Predicted')
         plt.tight_layout()
-        mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png')
+        mlflow.log_figure(fig, artifact_file='training_confusion_matrix.png', run_id=current_run_id)
         plt.close(fig)
 
         # ARTIFACT 4: Klasifikasi Report
         os.makedirs('reports', exist_ok=True)
-        mlflow.log_text(classification_report(y_test, y_pred_test), artifact_file='reports/classification_report.txt')
+        mlflow.log_text(classification_report(y_test, y_pred_test), artifact_file='reports/classification_report.txt', run_id=current_run_id)
 
         # ARTIFACT 5: Filter Feature Importance Plot
         importances = best_model.feature_importances_
@@ -130,17 +132,16 @@ def main():
             ax_fi.set_xlabel('Relative Importance')
             ax_fi.set_ylabel('Features')
             plt.tight_layout()
-            mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
+            mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png', run_id=current_run_id)
             plt.close(fig_fi)
         
         # Logging Model Utama
-        mlflow.sklearn.log_model(sk_model=best_model, artifact_path='model', input_example=input_example)
+        mlflow.sklearn.log_model(sk_model=best_model, artifact_path='model', input_example=input_example, run_id=current_run_id)
 
         # 5. Ekspor Run ID ke root directory agar dapat ditarik oleh CI/CD GitHub Actions
         txt_path = os.path.join(base_dir, 'run_id.txt')
         with open(txt_path, 'w') as f:
             f.write(current_run_id) 
         print(f'RUN ID {current_run_id} berhasil disimpan ke {txt_path}')
-
 if __name__ == '__main__':
     main()  
