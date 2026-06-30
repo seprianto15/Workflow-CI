@@ -61,8 +61,8 @@ jobs:
           cd MLProject
           
           RUN_ID=$(ls -t mlruns/0 | head -n 1)
-          echo "Captured RUN_ID: $LATEST_RUN_ID"
-          echo "RUN_ID=$LATEST_RUN_ID" >> $GITHUB_ENV
+          echo "Captured RUN_ID: $RUN_ID"
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
       # Save models to GitHub Repository
       - name: Upload to Github
