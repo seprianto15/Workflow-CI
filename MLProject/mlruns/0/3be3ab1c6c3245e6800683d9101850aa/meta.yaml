@@ -1,0 +1,15 @@
+artifact_uri: file:///home/runner/work/Workflow-CI/Workflow-CI/MLProject/mlruns/0/3be3ab1c6c3245e6800683d9101850aa/artifacts
+end_time: 1782862628927
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3be3ab1c6c3245e6800683d9101850aa
+run_name: tasteful-stag-736
+run_uuid: 3be3ab1c6c3245e6800683d9101850aa
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1782862622769
+status: 3
+tags: []
+user_id: runner
