@@ -34,6 +34,7 @@ jobs:
         run: |
           echo 'CSV URL is ${{ env.CSV_URL }}'
       
+      # Clear cache mlruns
       - name: Clear environment
         run: |
           find . -name "mlruns" -type d -exec rm -rf {} +
