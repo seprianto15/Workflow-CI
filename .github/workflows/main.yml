@@ -33,7 +33,7 @@ jobs:
       - name: Check Env
         run: |
           echo 'CSV URL is ${{ env.CSV_URL }}'
-      
+        
       # Install dependencies
       - name: Install dependencies
         run: |
@@ -43,6 +43,11 @@ jobs:
           else
             pip install mlflow scikit-learn pandas numpy matplotlib seaborn
           fi
+
+      # Clear cache mlruns
+      - name: Clear environment
+        run: |
+          find . -name "mlruns" -type d -exec rm -rf {} +
       
       # Run MLflow Project
       - name: Run mlflow project
@@ -72,10 +77,10 @@ jobs:
       
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "runs://${{ env.RUN_ID }}/model" --name "cc"
+          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "cc"
       
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
