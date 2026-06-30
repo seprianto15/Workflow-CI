@@ -1,0 +1,15 @@
+artifact_uri: file:///home/runner/work/Workflow-CI/Workflow-CI/MLProject/mlruns/0/6be6e838aeac4afba0e118a0505caa77/artifacts
+end_time: 1782861894346
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6be6e838aeac4afba0e118a0505caa77
+run_name: intrigued-fly-248
+run_uuid: 6be6e838aeac4afba0e118a0505caa77
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1782861888184
+status: 3
+tags: []
+user_id: runner
