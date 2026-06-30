@@ -60,9 +60,9 @@ jobs:
         run: |
           cd MLProject
           
-          RUN_ID=$(cat run_id.txt)
-          echo "Captured MLFLOW_RUN_ID: $RUN_ID"
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          RUN_ID=$(ls -t mlruns/0 | head -n 1)
+          echo "Captured RUN_ID: $LATEST_RUN_ID"
+          echo "RUN_ID=$LATEST_RUN_ID" >> $GITHUB_ENV
 
       # Save models to GitHub Repository
       - name: Upload to Github
@@ -76,6 +76,9 @@ jobs:
           git push origin main
       
       - name: Build Docker Model
+        env:
+          # Pastikan path absolut ke folder mlruns terbaca
+          MLFLOW_TRACKING_URI: file:///${{ github.workspace }}/MLProject
         run: |
           mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "cc"
       
