@@ -77,7 +77,7 @@ jobs:
            git push origin main
 
       # 8. Save models to GitHub Repository
-      - name: Save mlruns to repo
+      - name: Upload to Github
         run: |
           git config --global user.name "${{ secrets.username }}"
           git config --global user.email "${{ secrets.email }}"
