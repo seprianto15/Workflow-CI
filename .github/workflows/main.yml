@@ -52,13 +52,9 @@ jobs:
           cd MLProject
           mlflow run . --env-manager local
 
-      # PERBAIKAN: Mengekstrak MLFLOW_RUN_ID dari GITHUB_ENV agar bisa dipakai untuk download artifacts
       - name: Read and Set Run ID
         run: |
-          # Cukup cetak ulang isi variabel MLFLOW_RUN_ID yang sudah didaftarkan
-          echo "Captured Run ID: $MLFLOW_RUN_ID"
-          
-          # Daftarkan kembali ke env global workflow agar step selanjutnya bisa memanggil ${{ env.RUN_ID }}
+          echo "Captured MLFLOW_RUN_ID: $MLFLOW_RUN_ID"
           echo "RUN_ID=$MLFLOW_RUN_ID" >> $GITHUB_ENV
 
       # Download the 5 best parameters artifacts + model binary back from DagsHub
