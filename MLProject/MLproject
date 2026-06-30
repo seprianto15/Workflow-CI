@@ -1,7 +1,11 @@
-name: Students_Performance_Tuning
+name: Students_Performance
 
 conda_env: conda.yaml
-
+ 
 entry_points:
   main:
-    command: 'python modelling.py'
+    parameters:
+      n_estimators: {type: int, default: 70}
+      max_depth: {type: int, default: 15}
+      dataset : {type: string, default: 'data/final_data_students.csv'}
+    command: 'python modelling.py {n_estimators} {max_depth} {dataset}'
