@@ -103,22 +103,21 @@ if __name__ == "__main__":
         mlflow.log_figure(fig_fi, artifact_file='plots/feature_importance.png')
         plt.close(fig_fi)
     
-    # 6. Save Run ID for CI/CD pipeline automation
-    # Save Run ID for eksperimen (plot & report)
-    experiment_run_id = mlflow.active_run().info.run_id
-    experiment_file_path = os.path.join(os.getcwd(), "experiment_run_id.txt")
-    with open(experiment_file_path, "w") as f:
-        f.write(experiment_run_id)
-    print(f"Run ID {experiment_run_id} successfully saved to {experiment_file_path}")    
-
-    # Save Run ID for model
-    model_info = mlflow.sklearn.log_model(
+    # 6. Model Logging (Dikeluarkan dari pengecekan plot agar selalu tercatat)
+    mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path="model",
+        artifact_path='model',
         input_example=input_example
     )
-    model_file_path = os.path.join(os.getcwd(), "model_run_id.txt")
-    with open(model_file_path, "w") as f:
-        f.write(model_info.run_id)
-    print(f"Run ID {model_info.run_id} successfully saved to {model_file_path}")
+
+    # 7. Save Run ID for CI/CD pipeline automation
+    run_id = mlflow.active_run().info.run_id
+    print(f"MLFLOW_RUN_ID: {run_id}")
+    
+    # Write the active run ID to a text file in the current working directory
+    with open(os.path.join(os.getcwd(), "run_id.txt"), "w") as f:
+        f.write(run_id)
+        
+    print(f"Run ID {run_id} successfully saved")
+
     

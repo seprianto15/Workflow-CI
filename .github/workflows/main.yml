@@ -53,14 +53,10 @@ jobs:
       # Read and Set Run ID
       - name: Get latest Mlflow run_id
         run: |
-          EXPERIMENT_ID=$(cat MLProject/experiment_run_id.txt)
-          MODEL_ID=$(cat MLProject/model_run_id.txt)
-          
-          echo "EXPERIMENT_ID=$EXPERIMENT_ID" >> $GITHUB_ENV
-          echo "MODEL_ID=$MODEL_ID" >> $GITHUB_ENV
-          
-          echo "Experiment ID: $EXPERIMENT_ID"
-          echo "Model ID: $MODEL_ID"
+          RUN_ID=$(cat MLProject/run_id.txt)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          echo "Run ID: $RUN_ID"
+  
 
       # Save models to GitHub Repository
       - name: Upload to Github
@@ -69,9 +65,8 @@ jobs:
           git config --global user.email "${{ secrets.email }}"
           # Karena mlruns ada di dalam MLProject, maka:
           git add MLProject/mlruns/
-          git add MLProject/experiment_run_id.txt
-          git add MLProject/model_run_id.txt
-          git commit -m "Save mlruns from CI run (Experiment ID: ${{ env.EXPERIMENT_ID }}, Model ID: ${{ env.MODEL_ID }})" || true
+          git add MLProject/run_id.txt
+          git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git pull origin main --rebase
           git push origin main
       
