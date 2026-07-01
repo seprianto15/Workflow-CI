@@ -53,7 +53,7 @@ jobs:
       # Read and Set Run ID
       - name: Get latest Mlflow run_id
         run: |
-          RUN_ID=$(ls -td ./Workflow-CI/MLProject/mlruns/0/*/ | head -n 1 | cut -d'/' -f6)
+          RUN_ID=$(ls -td MLProject/mlruns/0/*/ | head -n 1 | cut -d'/' -f6)
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           echo "Latest run_id: $RUN_ID"
 
@@ -62,8 +62,8 @@ jobs:
         run: |
           git config --global user.name "${{ secrets.username }}"
           git config --global user.email "${{ secrets.email }}"
-          git add ./Workflow-CI/MLProject/mlruns/
-          git add ./Workflow-CI/MLProject/run_id.txt
+          git add MLProject/mlruns/
+          git add MLProject/run_id.txt
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git pull origin main --no-rebase
           git push origin main
