@@ -48,7 +48,7 @@ jobs:
       - name: Run mlflow project
         run: |
           cd MLProject
-          mlflow run . --env-manager=local
+          mlflow run MLproject --env-manager=local 
 
       # Read and Set Run ID
       - name: Get latest Mlflow run_id
@@ -70,12 +70,9 @@ jobs:
           git push origin main
 
       - name: Build Docker Model
-        env:
-          # Pastikan variabel ini ada di setiap step yang menjalankan perintah mlflow
-          MLFLOW_TRACKING_URI: file://${{ github.workspace }}/MLProject/mlruns
-          MLFLOW_ALLOW_FILE_STORE: 'true'
         run: |
           echo "Building model for Run ID: ${{ env.RUN_ID }}"
+          cd MLProject
           mlflow models build-docker \
             --model-uri "runs:/${{ env.RUN_ID }}/model" \
             --name "cc"
