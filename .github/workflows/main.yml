@@ -68,24 +68,6 @@ jobs:
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git push origin main
       
-      - name: Build Docker Model
-        run: |
-          cd MLProject
-          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "cc"
-      
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      
-      - name: Tag Docker Image
-        run: |
-          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
-
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
 
 
           
