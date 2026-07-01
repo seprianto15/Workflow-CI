@@ -71,8 +71,9 @@ jobs:
 
       - name: Build Docker Model
         env:
-          # Mengatur env var agar MLflow tahu di mana folder mlruns berada
+          # Pastikan variabel ini ada di setiap step yang menjalankan perintah mlflow
           MLFLOW_TRACKING_URI: file://${{ github.workspace }}/MLProject/mlruns
+          MLFLOW_ALLOW_FILE_STORE: 'true'
         run: |
           echo "Building model for Run ID: ${{ env.RUN_ID }}"
           mlflow models build-docker \
