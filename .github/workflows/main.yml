@@ -57,7 +57,6 @@ jobs:
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           echo "Run ID: $RUN_ID"
   
-
       # Save models to GitHub Repository
       - name: Upload to Github
         run: |
@@ -69,6 +68,10 @@ jobs:
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git pull origin main --rebase
           git push origin main
+          
+      - name: Build Docker Model
+        run: |
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "cc"
       
 
 
