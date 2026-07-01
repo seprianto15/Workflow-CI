@@ -75,8 +75,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     # Artifact 4: Classification Report 
-    report = classification_report(y_test, y_pred_test)
-    mlflow.log_text(report, artifact_file='reports/classification_report.txt')
+    mlflow.log_text(classification_report(y_test, y_pred_test), artifact_file='reports/classification_report.txt')
 
     # Artifact 5: Filtered Feature Importance Plot
     importances = model.feature_importances_
