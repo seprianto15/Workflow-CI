@@ -47,7 +47,6 @@ jobs:
       # Run MLflow Project
       - name: Run mlflow project
         run: |
-          cd MLProject
           mlflow run MLproject --env-manager=local 
 
       # Read and Set Run ID
