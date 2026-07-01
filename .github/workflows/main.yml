@@ -68,11 +68,14 @@ jobs:
           git commit -m "Save mlruns from CI run (Run ID: ${{ env.RUN_ID }})" || true
           git pull origin main --rebase
           git push origin main
-          
+
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "cc"
-      
+          echo "Building model for Run ID: ${{ env.RUN_ID }}"
+          mlflow models build-docker \
+            --model-uri "runs:/${{ env.RUN_ID }}/model" \
+            --name "cc" \
+            --tracking-uri "file://${{ github.workspace }}/MLProject/mlruns"
 
 
           
