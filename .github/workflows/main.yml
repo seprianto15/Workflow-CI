@@ -47,7 +47,8 @@ jobs:
       # Run MLflow Project
       - name: Run mlflow project
         run: |
-          mlflow run ./MLProject --env-manager=local 
+          cd MLProject
+          mlflow run . --env-manager=local 
 
       # Read and Set Run ID
       - name: Get latest Mlflow run_id
@@ -70,10 +71,8 @@ jobs:
 
       # Build Docker Model
       - name: Build Docker Model
-        env:
-          MLFLOW_TRACKING_URI: file://${{ github.workspace }}/MLproject/mlruns
-          MLFLOW_ALLOW_FILE_STORE: 'true'
         run: |
+          cd MLProject
           mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "cc"
 
 
