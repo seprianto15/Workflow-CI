@@ -40,10 +40,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install mlflow seaborn
 
-      # Clear cache mlruns
       - name: Clear environment
         run: |
-          find . -name "mlruns" -type d -exec rm -rf {} +
+          rm -rf MLProject/mlruns
       
       # Run MLflow Project
       - name: Run mlflow project
@@ -71,7 +70,8 @@ jobs:
       
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "cc" --work-dir ./Workflow-CI/MLProject
+          cd MLProject
+          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "cc"
       
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
