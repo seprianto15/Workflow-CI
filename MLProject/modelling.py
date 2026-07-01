@@ -114,7 +114,7 @@ if __name__ == "__main__":
     run_id = mlflow.active_run().info.run_id
     print(f"MLFLOW_RUN_ID: {run_id}")
     
-    # Write the active run ID to a text file in the current working directory
+    # Write the active run ID to a text file in current working directory
     with open(os.path.join(os.getcwd(), "run_id.txt"), "w") as f:
         f.write(run_id)
         
