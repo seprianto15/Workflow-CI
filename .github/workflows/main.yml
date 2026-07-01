@@ -70,7 +70,6 @@ jobs:
           git push origin main
 
       - name: Build Docker Model
-        run: |
         env:
           # Mengatur env var agar MLflow tahu di mana folder mlruns berada
           MLFLOW_TRACKING_URI: file://${{ github.workspace }}/MLProject/mlruns
