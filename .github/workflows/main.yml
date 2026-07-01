@@ -10,6 +10,7 @@ on:
 
 env:
   CSV_URL: 'MLProject/data/final_data_students.csv'
+  MLFLOW_TRACKING_URI: file://${{ github.workspace }}/MLProject/mlruns
 
 jobs:
   build:
@@ -74,8 +75,7 @@ jobs:
           echo "Building model for Run ID: ${{ env.RUN_ID }}"
           mlflow models build-docker \
             --model-uri "runs:/${{ env.RUN_ID }}/model" \
-            --name "cc" \
-            --tracking-uri "file://${{ github.workspace }}/MLProject/mlruns"
+            --name "cc"
 
 
           
